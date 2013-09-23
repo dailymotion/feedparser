@@ -466,6 +466,7 @@ class _FeedParserMixin:
         'http://purl.org/rss/1.0/modules/content/':              'content',
         'http://my.theinfo.org/changed/1.0/rss/':                'cp',
         'http://purl.org/dc/elements/1.1/':                      'dc',
+        'http://www.dailymotion.com/dmrss/':                     'dm',
         'http://purl.org/dc/terms/':                             'dcterms',
         'http://purl.org/rss/1.0/modules/email/':                'email',
         'http://purl.org/rss/1.0/modules/event/':                'ev',
@@ -1660,6 +1661,52 @@ class _FeedParserMixin:
 
     def _end_link(self):
         value = self.pop('link')
+
+    def _start_dm_private(self, attrsD):
+        self.dm_private = (attrsD.get('value', 'true') == 'true')
+
+    def _end_dm_private(self):
+        self._save('dm_private', self.dm_private)
+
+    def add_copyright(self, label, value):
+        context = self._getContext()
+        context.setdefault('media_copyright', {})
+        context['media_copyright'][label] = value
+
+    def _start_dm_original(self, attrsD):
+        self.dm_original = attrsD
+        self.push('dm_original', 1)
+
+    def _end_dm_original(self):
+        dm_original = self.pop('dm_original')
+        if dm_original != None and len(dm_original.strip()) != 0:
+            context = self._getContext()
+            context.setdefault('dm_original', {})
+            if self.dm_original:
+                context['dm_original'] = self.dm_original
+            context['dm_original']['value'] = dm_original
+
+    def _start_dm_paywall(self, attrsD):
+        self.dm_paywall = attrsD
+        self.push('dm_paywall', 1)
+
+    def _end_dm_paywall(self):
+        dm_paywall = self.pop('dm_paywall')
+        if dm_paywall != None and len(dm_paywall.strip()) != 0:
+            context = self._getContext()
+            context.setdefault('dm_paywall', {})
+            if self.dm_paywall:
+                context['dm_paywall'] = self.dm_paywall
+            context['dm_paywall']['value'] = dm_paywall
+
+    def _start_media_copyright(self, attrsD):
+        self.add_copyright('url', attrsD['url'])
+        self.push('copyright', 1)
+
+    def _end_media_copyright(self):
+        copyright = self.pop('copyright')
+        if copyright != None and len(copyright.strip()) != 0:
+            self.add_copyright('value', copyright)
 
     def _start_guid(self, attrsD):
         self.guidislink = (attrsD.get('ispermalink', 'true') == 'true')
