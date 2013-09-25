@@ -1694,10 +1694,16 @@ class _FeedParserMixin:
         dm_paywall = self.pop('dm_paywall')
         if dm_paywall != None and len(dm_paywall.strip()) != 0:
             context = self._getContext()
-            context.setdefault('dm_paywall', {})
-            if self.dm_paywall:
-                context['dm_paywall'] = self.dm_paywall
-            context['dm_paywall']['value'] = dm_paywall
+            context['dm_paywall_price'] = dm_paywall
+            for key in ['rental_duration', 'preview_duration', 'preview_offset']:
+                if key in self.dm_paywall:
+                    context['dm_paywall_%s' % key] = self.dm_paywall[key]
+
+    def _start_media_subtitle(self, attrsD):
+        if 'lang' in attrsD and 'href' in attrsD:
+            context = self._getContext()
+            context.setdefault('media_subtitle', {})
+            context['media_subtitle'][attrsD['lang']] = attrsD['href']
 
     def _start_media_copyright(self, attrsD):
         self.add_copyright('url', attrsD['url'])
