@@ -1706,7 +1706,8 @@ class _FeedParserMixin:
             context['media_subtitle'][attrsD['lang']] = attrsD['href']
 
     def _start_media_copyright(self, attrsD):
-        self.add_copyright('url', attrsD['url'])
+        if 'url' in attrsD:
+            self.add_copyright('url', attrsD['url'])
         self.push('copyright', 1)
 
     def _end_media_copyright(self):
