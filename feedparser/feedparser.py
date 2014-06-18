@@ -1673,6 +1673,19 @@ class _FeedParserMixin:
         context.setdefault('media_copyright', {})
         context['media_copyright'][label] = value
 
+    def _start_dm_show(self, attrsD):
+        self.dm_show = attrsD
+        self.push('dm_show', 1)
+
+    def _end_dm_show(self):
+        dm_show = self.pop('dm_show')
+        if dm_show != None and len(dm_show.strip()) != 0:
+            context = self._getContext()
+            context.setdefault('dm_show', {})
+            if self.dm_show:
+                context['dm_show'] = self.dm_show
+            context['dm_show']['value'] = dm_show
+
     def _start_dm_original(self, attrsD):
         self.dm_original = attrsD
         self.push('dm_original', 1)
