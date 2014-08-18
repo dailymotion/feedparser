@@ -537,10 +537,10 @@ class _FeedParserMixin:
         self.incontributor = 0
         self.inpublisher = 0
         self.insource = 0
-        
+
         # georss
         self.ingeometry = 0
-        
+
         self.sourcedata = FeedParserDict()
         self.contentparams = FeedParserDict()
         self._summaryKey = None
@@ -1463,7 +1463,7 @@ class _FeedParserMixin:
         geometry = _parse_georss_line(self.pop('geometry'))
         if geometry:
             self._save_where(geometry)
-    
+
     def _end_georss_polygon(self):
         this = self.pop('geometry')
         geometry = _parse_georss_polygon(this)
@@ -1638,6 +1638,19 @@ class _FeedParserMixin:
     def _start_cloud(self, attrsD):
         self._getContext()['cloud'] = FeedParserDict(attrsD)
 
+    def _start_dm_criteria(self, attrsD):
+        self.dm_criteria = attrsD
+        self.push('dm_criteria', 1)
+
+    def _end_dm_criteria(self):
+        dm_criteria = self.pop('dm_criteria')
+        if dm_criteria is not None and len(dm_criteria.strip()) != 0:
+            context = self._getContext()
+            for key in ['type']:
+                if key in self.dm_criteria:
+                    criteria_type = self.dm_criteria[key]
+                    context['dm_criteria_%s' % criteria_type] = dm_criteria
+
     def _start_link(self, attrsD):
         attrsD.setdefault('rel', u'alternate')
         if attrsD['rel'] == u'self':
@@ -1663,10 +1676,12 @@ class _FeedParserMixin:
         value = self.pop('link')
 
     def _start_dm_private(self, attrsD):
-        self.dm_private = (attrsD.get('value', 'true') == 'true')
+        self.dm_private = attrsD
+        self.push('dm_private', 1)
 
     def _end_dm_private(self):
-        self._save('dm_private', self.dm_private)
+        dm_private = self.pop('dm_private')
+        self._save('dm_private', dm_private)
 
     def add_copyright(self, label, value):
         context = self._getContext()
@@ -2001,11 +2016,11 @@ class _FeedParserMixin:
             self.psc_chapters_flag = True
             attrsD['chapters'] = []
             self._getContext()['psc_chapters'] = FeedParserDict(attrsD)
-            
+
     def _end_psc_chapters(self):
         # Transition from True -> False
         self.psc_chapters_flag = False
-        
+
     def _start_psc_chapter(self, attrsD):
         if self.psc_chapters_flag:
             start = self._getAttribute(attrsD, 'start')
@@ -2910,7 +2925,7 @@ try:
     del regex
 except NameError:
     pass
-    
+
 def _parse_date_iso8601(dateString):
     '''Parse a variety of ISO-8601-compatible formats like 20040105'''
     m = None
@@ -3152,7 +3167,7 @@ def _parse_date_w3dtf(datestr):
             parts.append('00:00:00z')
     elif len(parts) > 2:
         return None
-    date = parts[0].split('-', 2) 
+    date = parts[0].split('-', 2)
     if not date or len(date[0]) != 4:
         return None
     # Ensure that `date` has 3 elements. Using '1' sets the default
@@ -3493,7 +3508,7 @@ def convert_to_utf8(http_headers, data):
                                  u'application/xml-external-parsed-entity')
     text_content_types = (u'text/xml', u'text/xml-external-parsed-entity')
     if (http_content_type in application_content_types) or \
-       (http_content_type.startswith(u'application/') and 
+       (http_content_type.startswith(u'application/') and
         http_content_type.endswith(u'+xml')):
         acceptable_content_type = 1
         rfc3023_encoding = http_encoding or xml_encoding or u'utf-8'
@@ -3680,7 +3695,7 @@ def _parse_georss_polygon(value, swap=True, dims=2):
     # A polygon contains a space separated list of latitude-longitude pairs,
     # with each pair separated by whitespace. There must be at least four
     # pairs, with the last being identical to the first (so a polygon has a
-    # minimum of three actual points). 
+    # minimum of three actual points).
     try:
         ring = list(_gen_georss_coords(value, swap, dims))
     except (IndexError, ValueError):
